@@ -1,0 +1,12 @@
+$kind: http-request
+name: New Request
+url: http://localhost:3000/api/auth/verify-otp
+method: POST
+body:
+  type: json
+  content: |-
+    {
+        "email": "tushar1@email.com",
+        "otp" : "191370"
+    }
+order: 1403997887798163
