@@ -6,7 +6,7 @@ import EventDetails from './Pages/EventDetails.jsx';
 import Login from './Pages/Login';
 import Register from './Pages/Register';
 import UserDashboard from './Pages/UserDashboard';
-import AdminDashboard from './Pages/AdminDashboard';
+import AdminDashboard from './Pages/AdminDashboard.jsx';
 import PaymentSuccess from './Pages/PaymentSuccess';
 import PaymentFailed from './Pages/PaymentFailed';
 
