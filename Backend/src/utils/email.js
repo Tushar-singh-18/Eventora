@@ -58,6 +58,7 @@ const sendOTPEmail = async (userEmail, otp, type) => {
         console.log(`OTP sent to ${userEmail} for ${type}`);
     } catch (error) {
         console.error('Error sending OTP email:', error);
+        throw error;
     }
 };
 

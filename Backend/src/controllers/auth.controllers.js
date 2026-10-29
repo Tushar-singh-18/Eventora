@@ -20,22 +20,33 @@ async function registerUser(req, res) {
         }
 
         let user = await userModel.findOne({ email });
-        if (user) return res.status(400).json({ message: 'User already exists' });
+        if (user?.isVerified) {
+            return res.status(400).json({ message: 'User already exists' });
+        }
 
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
+        if (!user) {
+            const salt = await bcrypt.genSalt(10);
+            const hashedPassword = await bcrypt.hash(password, salt);
 
-        user = await userModel.create({
-            name,
-            email,
-            password: hashedPassword,
-            role: 'user',
-            isVerified: false
-        });
+            user = await userModel.create({
+                name,
+                email,
+                password: hashedPassword,
+                role: 'user',
+                isVerified: false
+            });
+        }
 
         const otp = generateOTP();
+        await otpModel.deleteMany({ email, action: 'account_verification' });
         await otpModel.create({ email, otp, action: 'account_verification' });
-        await sendOTPEmail(email, otp, 'account_verification');
+        try {
+            await sendOTPEmail(email, otp, 'account_verification');
+        } catch {
+            return res.status(503).json({
+                message: 'Unable to send verification email. Please try again later.'
+            });
+        }
 
         res.status(201).json({
             message: 'OTP sent to email. Please verify.',
@@ -59,7 +70,13 @@ async function loginUser (req, res){
             const otp = generateOTP();
             await otpModel.findOneAndDelete({ email: user.email, action: 'account_verification' });
             await otpModel.create({ email: user.email, otp, action: 'account_verification' });
-            await sendOTPEmail(user.email, otp, 'account_verification');
+            try {
+                await sendOTPEmail(user.email, otp, 'account_verification');
+            } catch {
+                return res.status(503).json({
+                    message: 'Unable to send verification email. Please try again later.'
+                });
+            }
             return res.status(403).json({ message: 'Account not verified', needsVerification: true, email: user.email });
         }
 

@@ -1,19 +1,31 @@
-import React, { createContext, useState, useEffect } from 'react';
+import { createContext, useState } from 'react';
 import api from '../Utils/axios';
 
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
+    const [user, setUser] = useState(() => {
         const userInfo = localStorage.getItem('userInfo');
-        if (userInfo) {
-            setUser(JSON.parse(userInfo));
+        if (!userInfo) return null;
+
+        try {
+            const savedUser = JSON.parse(userInfo);
+            if (
+                !savedUser ||
+                typeof savedUser.name !== 'string' ||
+                typeof savedUser.role !== 'string' ||
+                typeof savedUser.token !== 'string'
+            ) {
+                throw new Error('Saved user session is invalid');
+            }
+            return savedUser;
+        } catch (error) {
+            console.error('Unable to restore saved session:', error);
+            localStorage.removeItem('userInfo');
+            localStorage.removeItem('token');
+            return null;
         }
-        setLoading(false);
-    }, []);
+    });
 
     const login = async (email, password) => {
         try {
@@ -56,8 +68,8 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, login, register, verifyOTP, logout, loading }}>
-            {!loading && children}
+        <AuthContext.Provider value={{ user, login, register, verifyOTP, logout }}>
+            {children}
         </AuthContext.Provider>
     );
 };
