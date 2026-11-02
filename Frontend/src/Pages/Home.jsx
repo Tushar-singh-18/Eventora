@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../Utils/axios';
 import { FaCalendarAlt, FaMapMarkerAlt, FaSearch, FaRegClock, FaTicketAlt, FaShieldAlt } from 'react-icons/fa';
@@ -7,24 +7,39 @@ const Home = () => {
     const [events, setEvents] = useState([]);
     const [search, setSearch] = useState('');
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
 
     useEffect(() => {
-        const timeoutId = setTimeout(() => {
-            fetchEvents();
-        }, 400); // 400ms debounce
-        return () => clearTimeout(timeoutId);
-    }, [search]);
+        const controller = new AbortController();
 
-    const fetchEvents = async () => {
-        try {
-            const { data } = await api.get(`/events?search=${search}`);
-            setEvents(data);
-        } catch (error) {
-            console.error('Error fetching events:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
+        const fetchEvents = async () => {
+            setLoading(true);
+            setError('');
+            try {
+                const { data } = await api.get('/events', {
+                    params: { search },
+                    signal: controller.signal
+                });
+                setEvents(data);
+            } catch (requestError) {
+                if (requestError.code !== 'ERR_CANCELED') {
+                    setError(requestError.code === 'ECONNABORTED'
+                        ? 'Loading events timed out. Please try again.'
+                        : 'Unable to load events. Please try again.');
+                }
+            } finally {
+                if (!controller.signal.aborted) {
+                    setLoading(false);
+                }
+            }
+        };
+
+        const timeoutId = setTimeout(fetchEvents, search ? 300 : 0);
+        return () => {
+            clearTimeout(timeoutId);
+            controller.abort();
+        };
+    }, [search]);
 
     return (
         <div className="flex flex-col min-h-screen">
@@ -86,6 +101,8 @@ const Home = () => {
 
             {loading ? (
                 <div className="text-center py-20 text-xl font-semibold text-gray-600">Loading events...</div>
+            ) : error ? (
+                <div className="text-center py-20 text-xl text-red-500">{error}</div>
             ) : events.length === 0 ? (
                 <div className="text-center py-20 text-xl text-gray-500">No events found matching your search.</div>
             ) : (

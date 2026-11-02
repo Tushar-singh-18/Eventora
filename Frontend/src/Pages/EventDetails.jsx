@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../Utils/axios';
 import { AuthContext } from '../Context/authContext';
@@ -21,7 +21,7 @@ const EventDetail = () => {
             try {
                 const { data } = await api.get(`/events/${id}`);
                 setEvent(data);
-            } catch (err) {
+            } catch {
                 setError('Failed to load event details.');
             } finally {
                 setLoading(false);
@@ -48,11 +48,11 @@ const EventDetail = () => {
                 await api.post('/bookings', { eventId: event._id, otp });
                 setSuccessMsg('Booking requested! Awaiting admin confirmation.');
                 setShowOTP(false);
-                // Update local seats count dynamically after booking
-                setEvent({ ...event, availableSeats: event.availableSeats - 1 });
             }
         } catch (err) {
-            setError(err.response?.data?.message || 'Booking failed');
+            setError(err.code === 'ECONNABORTED'
+                ? 'The booking request timed out. Please check your email or bookings before trying again.'
+                : err.response?.data?.message || 'Booking failed');
         } finally {
             setBookingLoading(false);
         }
@@ -153,7 +153,7 @@ const EventDetail = () => {
                                 : 'bg-gray-900 hover:bg-black text-white hover:shadow-xl hover:-translate-y-1'
                                 }`}
                         >
-                            {bookingLoading ? 'Processing...' : (showOTP ? 'Verify OTP & Confirm' : (successMsg && !showOTP ? 'Request Sent' : (isSoldOut ? 'Sold Out' : 'Confirm Registration')))}
+                            {bookingLoading ? (showOTP ? 'Verifying booking...' : 'Sending OTP...') : (showOTP ? 'Verify OTP & Confirm' : (successMsg && !showOTP ? 'Request Sent' : (isSoldOut ? 'Sold Out' : 'Confirm Registration')))}
                         </button>
                         {error && <p className="text-red-500 mt-4 text-center font-medium bg-red-50 p-2 rounded">{error}</p>}
                         {successMsg && <p className="text-green-600 mt-4 text-center font-medium bg-green-50 p-2 rounded">{successMsg}</p>}
