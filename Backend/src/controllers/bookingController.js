@@ -4,6 +4,10 @@ const { sendBookingEmail } = require('../utils/email')
 
 async function bookEvent (req, res) {
     try {
+        if (req.user.role === 'demo_admin') {
+            return res.status(403).json({ message: 'Demo admin sessions are read-only.' });
+        }
+
         const { eventId } = req.body;
 
         const event = await eventModel.findById(eventId);
@@ -64,7 +68,9 @@ async function getMyBooking (req, res) {
     try {
         const bookings = req.user.role === 'admin'
             ? await bookingModel.find().populate('eventId').populate('userId', 'name email').sort({ createdAt: -1 })
-            : await bookingModel.find({ userId: req.user.id }).populate('eventId').sort({ createdAt: -1 });
+            : req.user.role === 'demo_admin'
+                ? await bookingModel.find({ isDemo: true }).populate('eventId').populate('userId', 'name email').sort({ createdAt: -1 })
+                : await bookingModel.find({ userId: req.user.id }).populate('eventId').sort({ createdAt: -1 });
         res.json(bookings);
     } catch (error) {
         res.status(500).json({ message: 'Server Error', error: error.message });
@@ -73,6 +79,10 @@ async function getMyBooking (req, res) {
 
 async function cancelBooking (req, res) {
     try {
+        if (req.user.role === 'demo_admin') {
+            return res.status(403).json({ message: 'Demo admin sessions are read-only.' });
+        }
+
         const booking = await bookingModel.findById(req.params.id);
         if (!booking) return res.status(404).json({ message: 'Booking not found' });
         if (booking.userId.toString() !== req.user.id && req.user.role !== 'admin') {

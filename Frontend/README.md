@@ -1,5 +1,17 @@
 # React + Vite
 
+## Eventora read-only demo admin
+
+Choose **Try demo admin (read-only)** on the login page to view sample events and bookings without entering credentials. The demo role is restricted on the API: it can view seeded demo events and bookings but cannot create, edit, delete, approve, or cancel records.
+
+Before enabling the demo button on a deployment, configure `MONGO_URI` and `JWT_SECRET` for the backend and run the following from the `Backend` directory:
+
+```sh
+npm run seed:demo
+```
+
+The demo seeder is safe to run more than once and does not clear or overwrite existing data. It creates a demo admin plus clearly marked sample events, attendees, and bookings. Set `DEMO_ADMIN_EMAIL` in the backend environment if using a non-default demo account email; keep it consistent when running the seeder and deploying the API.
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:

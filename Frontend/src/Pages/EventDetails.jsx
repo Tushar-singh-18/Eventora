@@ -8,6 +8,7 @@ const EventDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const { user } = useContext(AuthContext);
+    const isDemoAdmin = user?.role === 'demo_admin';
     const [event, setEvent] = useState(null);
     const [loading, setLoading] = useState(true);
     const [bookingLoading, setBookingLoading] = useState(false);
@@ -121,16 +122,22 @@ const EventDetail = () => {
                             </div>
                         </div>
 
-                        <button
-                            onClick={handleBooking}
-                            disabled={isSoldOut || bookingLoading || Boolean(successMsg)}
-                            className={`w-full py-4 px-6 rounded-xl font-bold text-lg transition shadow-lg ${isSoldOut || successMsg
-                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                : 'bg-gray-900 hover:bg-black text-white hover:shadow-xl hover:-translate-y-1'
-                                }`}
-                        >
-                            {bookingLoading ? 'Submitting booking...' : (successMsg ? 'Request Sent' : (isSoldOut ? 'Sold Out' : 'Confirm Registration'))}
-                        </button>
+                        {isDemoAdmin ? (
+                            <p className="text-center text-sm text-gray-500 bg-gray-100 p-3 rounded-lg">
+                                Demo admin access is read-only; bookings are disabled.
+                            </p>
+                        ) : (
+                            <button
+                                onClick={handleBooking}
+                                disabled={isSoldOut || bookingLoading || Boolean(successMsg)}
+                                className={`w-full py-4 px-6 rounded-xl font-bold text-lg transition shadow-lg ${isSoldOut || successMsg
+                                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                    : 'bg-gray-900 hover:bg-black text-white hover:shadow-xl hover:-translate-y-1'
+                                    }`}
+                            >
+                                {bookingLoading ? 'Submitting booking...' : (successMsg ? 'Request Sent' : (isSoldOut ? 'Sold Out' : 'Confirm Registration'))}
+                            </button>
+                        )}
                         {error && <p className="text-red-500 mt-4 text-center font-medium bg-red-50 p-2 rounded">{error}</p>}
                         {successMsg && <p className="text-green-600 mt-4 text-center font-medium bg-green-50 p-2 rounded">{successMsg}</p>}
                     </div>

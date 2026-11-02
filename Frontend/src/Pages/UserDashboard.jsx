@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useContext, useCallback } from 'react';
 import { AuthContext } from '../Context/authContext';
 import api from '../Utils/axios';
 import { Link, useNavigate } from 'react-router-dom';
@@ -10,15 +10,7 @@ const UserDashboard = () => {
     const [bookings, setBookings] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        if (!user) {
-            navigate('/login');
-            return;
-        }
-        fetchBookings();
-    }, [user, navigate]);
-
-    const fetchBookings = async () => {
+    const fetchBookings = useCallback(async () => {
         try {
             const { data } = await api.get('/bookings/my');
             setBookings(data);
@@ -27,7 +19,19 @@ const UserDashboard = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        if (!user) {
+            navigate('/login');
+            return;
+        }
+        if (user.role === 'demo_admin') {
+            navigate('/admin');
+            return;
+        }
+        Promise.resolve().then(fetchBookings);
+    }, [user, navigate, fetchBookings]);
 
     const cancelBooking = async (id) => {
         if (window.confirm('Are you sure you want to cancel this booking request?')) {

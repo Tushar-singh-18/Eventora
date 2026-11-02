@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import { useState, useContext } from 'react';
 import { AuthContext } from '../Context/authContext';
 import { useNavigate, Link } from 'react-router-dom';
 
@@ -10,8 +10,21 @@ const Login = () => {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
-    const { login, verifyOTP } = useContext(AuthContext);
+    const { login, loginDemoAdmin, verifyOTP } = useContext(AuthContext);
     const navigate = useNavigate();
+
+    const handleDemoLogin = async () => {
+        setLoading(true);
+        setError('');
+        try {
+            await loginDemoAdmin();
+            navigate('/admin');
+        } catch (loginError) {
+            setError(loginError.message || loginError);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -94,6 +107,22 @@ const Login = () => {
                     {loading ? 'Processing...' : (showOTP ? 'Verify OTP & Log In' : 'Sign In')}
                 </button>
             </form>
+
+            {!showOTP && (
+                <div className="mt-4">
+                    <button
+                        type="button"
+                        onClick={handleDemoLogin}
+                        disabled={loading}
+                        className="w-full border border-gray-900 text-gray-900 font-bold py-3 rounded-lg hover:bg-gray-100 transition disabled:opacity-50"
+                    >
+                        {loading ? 'Processing...' : 'Try demo admin (read-only)'}
+                    </button>
+                    <p className="text-center text-xs text-gray-500 mt-2">
+                        Explore sample events and bookings. Changes are disabled.
+                    </p>
+                </div>
+            )}
 
             <p className="text-center mt-8 text-gray-600">
                 Don't have an account? <Link to="/register" className="text-gray-900 font-bold hover:underline">Sign up</Link>

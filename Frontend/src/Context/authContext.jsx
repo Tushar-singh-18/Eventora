@@ -40,6 +40,18 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    const loginDemoAdmin = async () => {
+        try {
+            const { data } = await api.post('/auth/demo-admin');
+            setUser(data);
+            localStorage.setItem('userInfo', JSON.stringify(data));
+            localStorage.setItem('token', data.token);
+            return data;
+        } catch (error) {
+            throw error.response?.data?.message || 'Demo admin login failed';
+        }
+    };
+
     const register = async (name, email, password) => {
         try {
             const { data } = await api.post('/auth/register', { name, email, password });
@@ -68,7 +80,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, login, register, verifyOTP, logout }}>
+        <AuthContext.Provider value={{ user, login, loginDemoAdmin, register, verifyOTP, logout }}>
             {children}
         </AuthContext.Provider>
     );

@@ -10,6 +10,7 @@ const eventSchema = new mongoose.Schema({
     availableSeats: { type: Number, required: true },
     image: { type: String },
     ticketPrice: { type: Number, required: true, default: 0 },
+    isDemo: { type: Boolean, default: false },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
 }, { timestamps: true });
 

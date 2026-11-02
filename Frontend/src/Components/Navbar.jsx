@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import { useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../Context/authContext';
 import { FaTicketAlt } from 'react-icons/fa';
@@ -23,7 +23,7 @@ const Navbar = () => {
                         <Link to="/" className="text-gray-200 hover:text-white transition cursor-pointer">Events</Link>
                         {user ? (
                             <>
-                                <Link to={user.role === 'admin' ? '/admin' : '/dashboard'} className="text-gray-200 hover:text-white transition">Dashboard</Link>
+                                <Link to={['admin', 'demo_admin'].includes(user.role) ? '/admin' : '/dashboard'} className="text-gray-200 hover:text-white transition">Dashboard</Link>
                                 <button onClick={handleLogout} className="bg-gray-700 hover:bg-black text-white px-4 py-2 rounded-md transition">Logout</button>
                             </>
                         ) : (

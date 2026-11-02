@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useContext, useCallback } from 'react';
 import { AuthContext } from '../Context/authContext';
 import api from '../Utils/axios';
 import { useNavigate } from 'react-router-dom';
@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 const AdminDashboard = () => {
     const { user } = useContext(AuthContext);
     const navigate = useNavigate();
+    const isDemoAdmin = user?.role === 'demo_admin';
     const [events, setEvents] = useState([]);
     const [bookings, setBookings] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -15,28 +16,28 @@ const AdminDashboard = () => {
         title: '', description: '', date: '', location: '', category: '', totalSeats: '', ticketPrice: '', image: ''
     });
 
-    useEffect(() => {
-        if (!user || user.role !== 'admin') {
-            navigate('/login');
-            return;
-        }
-        fetchData();
-    }, [user, navigate]);
-
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         try {
             const [eventsRes, bookingsRes] = await Promise.all([
                 api.get('/events'),
-                api.get('/bookings/my') // Admin gets all bookings
+                api.get('/bookings/my')
             ]);
-            setEvents(eventsRes.data);
+            setEvents(isDemoAdmin ? eventsRes.data.filter((event) => event.isDemo) : eventsRes.data);
             setBookings(bookingsRes.data);
         } catch (error) {
             console.error('Error fetching admin data', error);
         } finally {
             setLoading(false);
         }
-    };
+    }, [isDemoAdmin]);
+
+    useEffect(() => {
+        if (!user || !['admin', 'demo_admin'].includes(user.role)) {
+            navigate('/login');
+            return;
+        }
+        Promise.resolve().then(fetchData);
+    }, [user, navigate, fetchData]);
 
     const handleCreateEvent = async (e) => {
         e.preventDefault();
@@ -55,7 +56,7 @@ const AdminDashboard = () => {
             try {
                 await api.delete(`/events/${id}`);
                 fetchData();
-            } catch (error) {
+            } catch {
                 alert('Error deleting event');
             }
         }
@@ -88,14 +89,18 @@ const AdminDashboard = () => {
             <div className="bg-black text-white rounded-2xl p-6 sm:p-8 mb-8 shadow-lg flex flex-col md:flex-row justify-between items-center gap-6 text-center md:text-left">
                 <div>
                     <h1 className="text-2xl sm:text-3xl font-extrabold mb-2">Admin Dashboard</h1>
-                    <p className="text-gray-300">Manage events and manually confirm bookings.</p>
+                    <p className="text-gray-300">
+                        {isDemoAdmin ? 'Read-only preview of sample events and bookings.' : 'Manage events and manually confirm bookings.'}
+                    </p>
                 </div>
-                <button
-                    onClick={() => setShowEventForm(!showEventForm)}
-                    className="w-full md:w-auto bg-white text-black font-bold py-3 px-6 rounded-lg hover:bg-gray-100 transition shadow-md"
-                >
-                    {showEventForm ? 'Cancel Creation' : '+ Create New Event'}
-                </button>
+                {!isDemoAdmin && (
+                    <button
+                        onClick={() => setShowEventForm(!showEventForm)}
+                        className="w-full md:w-auto bg-white text-black font-bold py-3 px-6 rounded-lg hover:bg-gray-100 transition shadow-md"
+                    >
+                        {showEventForm ? 'Cancel Creation' : '+ Create New Event'}
+                    </button>
+                )}
             </div>
 
             {/* Admin Stats Row */}
@@ -163,9 +168,11 @@ const AdminDashboard = () => {
                                                 <span className="flex items-center gap-1 font-medium"><div className={`w-2 h-2 rounded-full ${event.availableSeats > 0 ? 'bg-green-500' : 'bg-red-500'}`}></div> {event.availableSeats}/{event.totalSeats} seats</span>
                                             </div>
                                         </div>
-                                        <button onClick={() => handleDeleteEvent(event._id)} className="w-full sm:w-auto text-red-500 hover:text-white hover:bg-red-500 border border-red-200 px-4 py-2 rounded-lg text-sm font-bold transition shadow-sm shrink-0">
-                                            Delete
-                                        </button>
+                                        {!isDemoAdmin && (
+                                            <button onClick={() => handleDeleteEvent(event._id)} className="w-full sm:w-auto text-red-500 hover:text-white hover:bg-red-500 border border-red-200 px-4 py-2 rounded-lg text-sm font-bold transition shadow-sm shrink-0">
+                                                Delete
+                                            </button>
+                                        )}
                                     </li>
                                 ))
                             }
@@ -214,7 +221,7 @@ const AdminDashboard = () => {
                                         </div>
 
                                         {/* Action buttons for admin */}
-                                        {booking.status === 'pending' && (
+                                        {!isDemoAdmin && booking.status === 'pending' && (
                                             <div className="flex flex-wrap gap-2 mt-2">
                                                 <button onClick={() => handleConfirmBooking(booking._id, 'paid')} className="flex-1 min-w-[120px] bg-green-50 text-green-700 hover:bg-green-600 hover:text-white border border-green-200 text-xs font-bold py-2.5 px-3 rounded-lg shadow-sm transition">
                                                     ✓ Approve as Paid

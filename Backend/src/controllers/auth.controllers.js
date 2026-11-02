@@ -92,6 +92,30 @@ async function loginUser (req, res){
     }
 };
 
+async function loginDemoAdmin(req, res) {
+    try {
+        const email = process.env.DEMO_ADMIN_EMAIL || 'demo-admin@eventora.com';
+        const user = await userModel.findOne({ email, role: 'demo_admin', isVerified: true });
+
+        if (!user) {
+            return res.status(503).json({
+                message: 'Demo admin is not set up yet. Run the backend demo seed command.'
+            });
+        }
+
+        return res.json({
+            _id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            token: generateToken(user.id, user.role)
+        });
+    } catch (error) {
+        console.error('Unable to create demo admin session:', error);
+        return res.status(500).json({ message: 'Unable to start demo session.' });
+    }
+}
+
 async function verifyOTP (req, res) {
     try {
         const { email, otp } = req.body;
@@ -126,4 +150,4 @@ async function verifyOTP (req, res) {
     }
 };
 
-module.exports = {registerUser, loginUser, verifyOTP}
+module.exports = {registerUser, loginUser, loginDemoAdmin, verifyOTP}
